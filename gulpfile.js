@@ -13,7 +13,7 @@ var source = require('vinyl-source-stream');
 var rename = require('gulp-rename');
 
 var banner = ['/**',
-    ' * <%= pkg.name %> v<%= pkg.version %>',
+    ' * <%= pkg.name %> v<%= pkg.version %> [custom es5 build]',
     ' * Copyright <%= pkg.author %>',
     ' * @link https://github.com/ionaru/easy-markdown-editor',
     ' * @license <%= pkg.license %>',
@@ -28,7 +28,19 @@ function lint() {
 }
 
 function scripts() {
-    return browserify({entries: './src/js/easymde.js', standalone: 'EasyMDE'}).bundle()
+    return browserify({entries: './src/js/easymde.js', standalone: 'EasyMDE'})
+        .transform('babelify', {
+            global: true,
+            ignore: [/\/node_modules\/(?!(marked|codemiror.*))/],
+            presets: [
+                ['@babel/preset-env', {
+                     //targets: {'ie': '8', safari: '8'},
+                     targets: {browsers: '> 1%, IE 11, not dead',},
+                     useBuiltIns: 'usage'
+                },
+            ]],
+        })
+        .bundle()
         .pipe(source('easymde.min.js'))
         .pipe(buffer())
         .pipe(terser())
